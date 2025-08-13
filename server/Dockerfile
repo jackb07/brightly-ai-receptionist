@@ -1,10 +1,10 @@
-# Use an official Node.js runtime as a parent image
+# Use an official Node.js image
 FROM node:18
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json first (for caching installs)
 COPY package*.json ./
 
 # Install dependencies
@@ -13,8 +13,8 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Expose the port Render will use
-EXPOSE 10000
+# Expose the port your app runs on
+EXPOSE 3000
 
-# Start the app
+# Start the application
 CMD ["npm", "start"]
