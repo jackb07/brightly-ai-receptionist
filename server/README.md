@@ -1,8 +1,9 @@
 # Brightly AI Receptionist
 
-An AI receptionist powered by ElevenLabs, Twilio, and Cal.com.
+An advanced AI-powered receptionist for modern businesses, combining natural voice conversations with smart appointment scheduling and call management.
 
-## Setup
-1. Clone or fork this repo.
-2. Add environment variables from `.env.example`.
-3. Deploy to Render with:
+Key Features
+Professional, human-like voice interactions
+Handles incoming calls and schedules appointments automatically
+Transfers urgent calls to a live human agent
+Integrates with leading booking platforms and telephony services
