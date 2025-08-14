@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Expose port for Render
-EXPOSE 10000
+EXPOSE 3000
 
 # Start the application
 CMD ["npm", "start"]
