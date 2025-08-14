@@ -1,14 +1,14 @@
 # Use official Node.js LTS image
-FROM node:18
+FROM node:18-alpine
 
-# Create app directory
+# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Install dependencies first (cache layer)
 COPY package*.json ./
-RUN npm install
+RUN npm install --production
 
-# Copy the rest of the application
+# Copy application code
 COPY . .
 
 # Expose port for Render
