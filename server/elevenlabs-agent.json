@@ -1,1 +1,3 @@
-Remove elevenlabs-agent.json (moving to dynamic config)
+{
+  "_comment": "file intentionally removed — configuration handled in ElevenLabs dashboard"
+}
