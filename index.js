@@ -1,70 +1,66 @@
 import express from "express";
+import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import helmet from "helmet";
-import morgan from "morgan";
+import axios from "axios";
 import twilio from "twilio";
 import { checkAvailability } from "./calcom.js";
 
 dotenv.config();
 const app = express();
+app.use(bodyParser.json());
 
-// Security & logging
-app.use(helmet());
-app.use(morgan("tiny"));
-
-// Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Health check
-app.get("/", (req, res) => {
-  res.type("text/plain").send("Brightly AI Receptionist is running.");
-});
-app.get("/healthz", (req, res) => {
-  res.json({ ok: true, uptime: process.uptime() });
-});
-
-// Check Cal.com availability
-app.post("/elevenlabs/tool/check_booking", async (req, res) => {
+/**
+ * Check booking availability via Cal.com
+ */
+app.post("/check_booking", async (req, res) => {
   try {
-    const { date, time } = req.body || {};
-    if (!date || !time) return res.status(400).json({ error: "Missing date or time" });
+    const { date, time } = req.body;
     const available = await checkAvailability(date, time);
-    res.json({ available: !!available });
+    res.json({ available });
   } catch (err) {
-    console.error("check_booking error:", err?.response?.data || err?.message || err);
+    console.error("Booking error:", err.message);
     res.status(500).json({ error: "Error checking availability" });
   }
 });
 
-// Transfer to human
+/**
+ * Transfer to human agent via Twilio
+ */
 app.post("/transfer", async (req, res) => {
-  const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_NUMBER, HUMAN_NUMBER, BASE_URL } = process.env;
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_NUMBER || !HUMAN_NUMBER || !BASE_URL) {
-    return res.status(500).json({ error: "Missing Twilio or BASE_URL env vars" });
-  }
-  const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
   try {
     await client.calls.create({
-      to: HUMAN_NUMBER,
-      from: TWILIO_NUMBER,
-      url: `${BASE_URL}/twilio/voice-bridge`
+      to: process.env.HUMAN_NUMBER,
+      from: process.env.TWILIO_NUMBER,
+      url: `${process.env.BASE_URL}/twilio/voice-bridge`
     });
+
     res.json({ message: "Transferred to human agent" });
   } catch (err) {
-    console.error("Twilio transfer error:", err?.response?.data || err?.message || err);
+    console.error("Transfer error:", err.message);
     res.status(500).json({ error: "Error transferring call" });
   }
 });
 
-// Twilio voice bridge
+/**
+ * Twilio XML Response for voice bridge
+ */
 app.post("/twilio/voice-bridge", (req, res) => {
-  const vr = new twilio.twiml.VoiceResponse();
-  vr.say("Connecting you to a human agent, please hold.");
-  vr.dial(process.env.HUMAN_NUMBER);
-  res.type("text/xml").send(vr.toString());
+  const twiml = new twilio.twiml.VoiceResponse();
+  twiml.say("Connecting you to a human agent, please hold.");
+  twiml.dial(process.env.HUMAN_NUMBER);
+  res.type("text/xml").send(twiml.toString());
 });
 
-// Start server
+/**
+ * Health check (for Render)
+ */
+app.get("/", (req, res) => {
+  res.send("🚀 Brightly AI Receptionist is running!");
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Brightly AI server listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
